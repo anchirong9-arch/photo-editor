@@ -134,8 +134,10 @@ document.getElementById('b2').onclick = async () => {
     log('자르기 모드: 캔버스 ' + PE.R.outputSize().w + '×' + PE.R.outputSize().h + ' / draft ' + JSON.stringify(PE.S.cropDraft));
     d.querySelector('#aspectChips .chip[data-aspect="1:1"]').click(); await wait(200);
     log('1:1 → ' + JSON.stringify(PE.S.cropDraft));
-    await drag(d, 0.985, 0.985, 0.70, 0.70);
-    log('핸들 드래그 → ' + JSON.stringify(PE.S.cropDraft));
+    log('픽셀 크기 → ' + Math.round(PE.S.cropDraft.w * 1600) + '×' + Math.round(PE.S.cropDraft.h * 1200));
+    const seX = PE.S.cropDraft.x + PE.S.cropDraft.w, seY = PE.S.cropDraft.y + PE.S.cropDraft.h;
+    await drag(d, seX - 0.006, seY - 0.006, 0.70, 0.80);
+    log('핸들 드래그 → ' + JSON.stringify(PE.S.cropDraft) + ' (' + Math.round(PE.S.cropDraft.w * 1600) + '×' + Math.round(PE.S.cropDraft.h * 1200) + ')');
     d.getElementById('btnCropApply').click(); await wait(350);
     const after = PE.R.outputSize();
     log('적용 ' + before.w + '×' + before.h + ' → ' + after.w + '×' + after.h + ' · 도구 ' + PE.S.tool);

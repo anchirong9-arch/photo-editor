@@ -276,7 +276,7 @@ function cropPointerDown(e) {
   cropG = {
     mode, startN: { x: nx, y: ny },
     start: { ...S.cropDraft },
-    aspect: currentAspect(),
+    aspect: currentAspect() ? currentAspect() * (H / W) : null,
   };
   if (mode === 'new') {
     S.cropDraft = { x: clamp(nx, 0, 0.98), y: clamp(ny, 0, 0.98), w: 0.02, h: 0.02 };
@@ -310,10 +310,11 @@ function cropPointerMove(e) {
     if (m.includes('n')) y1 = clamp(d0.y + dy, 0, y2 - 0.02);
     if (m.includes('s')) y2 = clamp(d0.y + d0.h + dy, y1 + 0.02, 1);
     let w = x2 - x1, h = y2 - y1;
-    if (cropG.aspect) {
-      const target = w / cropG.aspect;
-      if (m === 'n' || m === 's') { h = h; w = h * cropG.aspect; }
-      else { w = w; h = target; }
+    const na = cropG.aspect;
+    if (na) {
+      // 비율 고정: 드래그한 축을 기준으로 다른 축을 맞춘다
+      if (m === 'n' || m === 's') w = h * na;
+      else h = w / na;
       if (m.includes('w')) x1 = x2 - w; else x2 = x1 + w;
       if (m.includes('n')) y1 = y2 - h; else y2 = y1 + h;
     }
@@ -324,19 +325,18 @@ function cropPointerMove(e) {
   emit('crop', d);
 }
 
-let aspectValue = null; // number | null
+let aspectValue = null; // 픽셀 비율(w/h) | null
 export function currentAspect() { return aspectValue; }
 export function setAspect(v) {
   aspectValue = v;
-  if (!S.cropDraft) return;
-  if (!v) return;
-  // 현재 초점을 중심으로 비율에 맞춘 최대 사각형
+  if (!S.cropDraft || !v) return;
+  const W = overlay.width || 1, H = overlay.height || 1;
+  const na = v * (H / W);            // 정규화 좌표계 비율
   const c = S.cropDraft;
   const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
-  let w = c.w, h = w / v;
-  if (h > 1) { h = 1; w = h * v; }
-  if (w > 1) { w = 1; h = w / v; }
-  let x = clamp(cx - w / 2, 0, 1 - w), y = clamp(cy - h / 2, 0, 1 - h);
+  let w, h;
+  if (na >= 1) { w = 1; h = 1 / na; } else { w = na; h = 1; }
+  const x = clamp(cx - w / 2, 0, 1 - w), y = clamp(cy - h / 2, 0, 1 - h);
   S.cropDraft = { x, y, w, h };
   invalidate();
   emit('crop', S.cropDraft);

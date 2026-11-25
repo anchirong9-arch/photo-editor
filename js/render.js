@@ -269,7 +269,7 @@ function drawStroke(ctx, l, W, H) {
   ctx.lineWidth = l.mode === 'marker' ? lw * 2.4 : lw;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  if (l.mode === 'marker') ctx.globalCompositeOperation = 'multiply';
+  if (l.mode === 'marker') ctx.globalAlpha *= 0.45;   // 형광펜은 반투명하게 얹는다
   ctx.beginPath();
   const p = l.points;
   if (p.length === 1) {
