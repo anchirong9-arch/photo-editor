@@ -32,7 +32,7 @@ document.getElementById('b0').onclick = async () => {
   const assets = ['./index.html', './styles.css', './js/boot.js', './js/editor.js',
                   './js/ui.js', './js/state.js', './js/render.js', './assets/icon.svg'];
   for (const a of assets) {
-    try { const r = await fetch(a + '?cb=' + Date.now(), { cache: 'reload' }); log(a + ' → ' + r.status); }
+    try { const r = await fetch(a, { cache: 'reload' }); log(a + ' → ' + r.status); }
     catch (e) { log(a + ' 실패 ' + e.message); }
   }
   f.src = './index.html?cb=' + Date.now();
