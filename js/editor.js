@@ -40,6 +40,7 @@ export function resizeCanvas() {
   view.style.width = cssW + 'px'; view.style.height = cssH + 'px';
   overlay.style.width = cssW + 'px'; overlay.style.height = cssH + 'px';
   draw();
+  emit('state');
 }
 
 export function invalidate() {

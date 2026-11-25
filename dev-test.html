@@ -18,6 +18,7 @@
     <button id="b1">1단계 (필터·텍스트·모자이크·그리기·도형)</button>
     <button id="b2">2단계 (자르기)</button>
     <button id="b3">3단계 (Undo/Redo·내보내기)</button>
+    <button id="b4">4단계 (링크 불러오기 모의)</button>
     <div id="log">준비…</div>
   </div>
 <script>
@@ -141,6 +142,49 @@ document.getElementById('b2').onclick = async () => {
     d.getElementById('btnCropApply').click(); await wait(350);
     const after = PE.R.outputSize();
     log('적용 ' + before.w + '×' + before.h + ' → ' + after.w + '×' + after.h + ' · 도구 ' + PE.S.tool);
+  } catch (e) { log('오류: ' + (e && e.message)); console.error(e); }
+};
+
+document.getElementById('b4').onclick = async () => {
+  const { w, d, PE } = ctx();
+  try {
+    const ww = w;
+    // 집 PC 스튜디오 응답 모의
+    const mk = (n, color) => {
+      const c = d.createElement('canvas'); c.width = 900; c.height = 1200;
+      const g = c.getContext('2d');
+      g.fillStyle = color; g.fillRect(0, 0, 900, 1200);
+      g.fillStyle = '#fff'; g.font = 'bold 90px sans-serif'; g.fillText('LINK ' + n, 80, 620);
+      return c.toDataURL('image/jpeg', 0.85);
+    };
+    const imgs = [mk(1, '#7c5cff'), mk(2, '#ff6b6b')];
+    const realFetch = ww.fetch;
+    ww.fetch = async (u, o) => {
+      if (String(u).includes('/api/health')) return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (String(u).includes('/api/extract-media')) {
+        niceLog(o && o.body);
+        return new Response(JSON.stringify({ ok: true, images: [
+          { dataUrl: imgs[0], name: '인스타 1' },
+          { url: imgs[1], name: '쓰레드 2' },
+        ] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return realFetch(u, o);
+    };
+    const niceLog = b => { try { log('요청 본문 ' + b); } catch (e) {} };
+
+    d.getElementById('btnLink').click();
+    await wait(400);
+    log('상태: ' + d.getElementById('linkStatusText').textContent);
+    d.getElementById('linkUrl').value = 'https://www.instagram.com/p/TEST123/';
+    d.getElementById('btnLinkFetch').click();
+    await wait(700);
+    log('결과 카드: ' + d.querySelectorAll('#linkResults .link-card').length + ' · ' + d.getElementById('linkStatusText').textContent);
+    d.getElementById('btnLinkAddAll').click();
+    await wait(900);
+    log('슬롯: ' + PE.S.slots.length + ' · 현재 ' + PE.S.slots[PE.S.slots.length-1].name + ' ' + JSON.stringify(PE.R.outputSize()));
+    log('모달 열림: ' + d.getElementById('linkModal').classList.contains('is-on'));
+    ww.fetch = realFetch;
+    log('— 4단계 완료');
   } catch (e) { log('오류: ' + (e && e.message)); console.error(e); }
 };
 
