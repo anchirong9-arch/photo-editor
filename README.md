@@ -51,6 +51,38 @@
 | 방향키 (Shift) | 선택 레이어 미세 이동 (10배) |
 | Esc | 선택 해제 / 자르기 취소 |
 
+## 인스타 · 쓰레드 링크로 불러오기 (집 PC 연동)
+
+웹(HTTPS)에서는 인스타그램·쓰레드가 CORS·로그인으로 막혀 있어 게시물을 직접 열 수 없습니다.
+그래서 집 PC의 **백수톡 스튜디오**가 대신 링크를 열어 사진을 넘겨 주는 구조입니다.
+
+- 앱: 상단 **🔗 링크** → 링크 붙여넣기 → `POST http://localhost:8770/api/extract-media`
+- 스튜디오가 꺼져 있으면 “집 PC에서 백수톡 스튜디오를 실행하면 링크에서 원본 사진을 바로 불러올 수 있습니다”
+  안내와 함께 **사진 파일 열기** 버튼을 보여 줍니다.
+- 주소가 다르면 모달의 *고급 · 스튜디오 주소*에서 바꿀 수 있습니다(브라우저에 저장).
+
+### 스튜디오에 필요한 엔드포인트 규격
+
+```http
+POST /api/extract-media
+Content-Type: application/json
+
+{ "url": "https://www.instagram.com/p/..." }
+
+200 { "ok": true, "images": [
+      { "url": "http://localhost:8770/api/media/ab12.jpg", "width": 1080, "height": 1350, "name": "인스타 1" },
+      { "dataUrl": "data:image/jpeg;base64,..." }
+    ] }
+```
+
+- `images` / `items` / `media` 배열, 또는 배열 자체를 그대로 돌려줘도 됩니다.
+- 항목은 `url` · `dataUrl` · `base64` 중 아무거나 — `base64`만 주면 앱이 `data:image/jpeg;base64,`를 붙입니다.
+- CORS 헤더가 필요합니다:
+  `Access-Control-Allow-Origin: https://anchirong9-arch.github.io` (또는 `*`),
+  `Access-Control-Allow-Methods: POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type`,
+  `Access-Control-Allow-Private-Network: true`, `OPTIONS` 프리플라이트에 204 응답.
+- `GET /api/health` → 200 (없어도 동작하지만 있으면 연결 상태가 더 정확합니다)
+
 ## 구조
 
 ```

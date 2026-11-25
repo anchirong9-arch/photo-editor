@@ -4,11 +4,13 @@
 
 import * as E from './editor.js';
 import { initUI } from './ui.js';
+import { initLinkTools } from './link.js';
 import * as State from './state.js';
 import * as Render from './render.js';
 
 function boot() {
   initUI();
+  initLinkTools();
   E.bindKeyboard();
   E.resizeCanvas();
 

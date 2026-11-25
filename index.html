@@ -41,6 +41,10 @@
     </div>
 
     <div class="top-actions">
+      <button id="btnLink" class="btn ghost" title="인스타 · 쓰레드 링크에서 사진 불러오기">
+        <svg viewBox="0 0 24 24" class="i"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7L11.6 6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span class="btn-label">링크</span>
+      </button>
       <button id="btnOpen" class="btn ghost" title="사진 열기 (O)">
         <svg viewBox="0 0 24 24" class="i"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         <span class="btn-label">사진</span>
@@ -150,6 +154,12 @@
               사진 열기
             </button>
             <button class="btn ghost wide" id="btnSample">샘플 사진</button>
+          </div>
+          <div class="row">
+            <button class="btn ghost wide" id="btnLink2">
+              <svg viewBox="0 0 24 24" class="i"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7L11.6 6.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              인스타·쓰레드 링크로 불러오기
+            </button>
           </div>
           <p class="note">로컬 파일 · 드래그&amp;드롭 · 클립보드 붙여넣기(Ctrl+V) · 휴대폰 사진첩</p>
 
@@ -421,8 +431,43 @@
   </div>
 </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div class="modal" id="linkModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>🔗 인스타 · 쓰레드 링크</h2>
+      <button class="icon-btn" id="btnCloseLink" aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="link-status" id="linkStatus" data-state="unknown">
+        <span class="dot"></span>
+        <span id="linkStatusText">스튜디오 확인 중…</span>
+        <button class="link-mini" id="btnLinkRecheck">다시 확인</button>
+      </div>
 
+      <label class="field" style="margin-top:10px">
+        <span class="lbl">게시물 링크</span>
+        <input type="text" id="linkUrl" class="text-input" inputmode="url" autocomplete="off"
+               placeholder="https://www.instagram.com/p/…  ·  https://www.threads.com/@…/post/…">
+      </label>
+      <button class="btn primary wide" id="btnLinkFetch">사진 불러오기</button>
+      <p class="note" id="linkNote">집 PC에서 백수톡 스튜디오를 실행하면 링크에서 원본 사진을 바로 불러올 수 있습니다.</p>
+
+      <div class="link-results" id="linkResults"></div>
+
+      <details class="group" id="linkAdv">
+        <summary>고급 · 스튜디오 주소</summary>
+        <input type="text" id="linkBase" class="text-input" placeholder="http://localhost:8770" inputmode="url">
+        <p class="note tiny">집 PC의 백수톡 스튜디오 런처 주소입니다. 기본 8770 포트.</p>
+      </details>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost wide" id="btnLinkFile">사진 파일 열기</button>
+      <button class="btn primary wide" id="btnLinkAddAll" hidden>모두 불러오기</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script type="module" src="js/boot.js"></script>
 </body>
 </html>

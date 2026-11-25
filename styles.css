@@ -355,6 +355,33 @@ textarea{resize:vertical;min-height:48px;line-height:1.4;}
   border-radius:9px;padding:8px 10px;margin-top:4px;font-variant-numeric:tabular-nums;line-height:1.6;
 }
 
+/* 링크(인스타·쓰레드) 불러오기 */
+.link-status{
+  display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);
+  background:#11141a;border:1px solid var(--line);border-radius:9px;padding:7px 10px;
+}
+.link-status .dot{width:8px;height:8px;border-radius:50%;background:#6f7788;flex:0 0 auto;}
+.link-status[data-state="ok"] .dot{background:var(--ok);box-shadow:0 0 0 3px rgba(61,220,151,.16);}
+.link-status[data-state="off"] .dot{background:var(--danger);}
+.link-status[data-state="unknown"] .dot{background:#ffd166;}
+.link-status[data-state="ok"]{color:#bfeeda;border-color:rgba(61,220,151,.28);}
+.link-mini{margin-left:auto;background:transparent;border:1px solid var(--line-2);color:var(--muted);
+  border-radius:7px;padding:2px 8px;font-size:11px;cursor:pointer;}
+.link-mini:hover{background:#232833;color:var(--text);}
+.link-results{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px;}
+.link-card{position:relative;border:1px solid var(--line);border-radius:9px;overflow:hidden;
+  background:#11141a;cursor:pointer;transition:.14s;}
+.link-card.is-on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+.link-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#0a0b0e;}
+.link-meta{font-size:10px;color:var(--muted-2);padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.link-add{width:100%;border:none;border-top:1px solid var(--line);background:#1b1f28;
+  color:#cfd4e2;font-size:10.5px;padding:4px;cursor:pointer;}
+.link-add:hover{background:#252a35;}
+.link-empty{grid-column:1/-1;font-size:11.5px;color:var(--muted-2);text-align:center;padding:14px 6px;
+  line-height:1.7;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;}
+.link-empty .muted{color:#5d6474;font-size:10.5px;}
+.link-empty .spinner{width:13px;height:13px;}
+
 /* 토스트 */
 .toast{
   position:fixed;left:50%;bottom:calc(22px + var(--safe-b));transform:translate(-50%,14px);
