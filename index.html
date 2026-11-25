@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>사진 편집기 — 필터 · 텍스트 · 모자이크 · 저장</title>
+<meta name="description" content="브라우저에서 바로 쓰는 사진 편집기 — 자르기, 필터, 자유 텍스트(폰트·테두리·그림자), 모자이크, 그리기, 도형, PNG/JPG/WebP 저장. 사진은 서버로 전송되지 않습니다.">
+<meta name="theme-color" content="#0e0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script>
+  window.__PE_ERRORS__ = [];
+  window.addEventListener('error', function (e) {
+    window.__PE_ERRORS__.push((e.message || 'error') + ' @' + (e.filename || '') + ':' + (e.lineno || 0));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    window.__PE_ERRORS__.push('promise: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+  });
+</script>
+</head>
+<body>
+
+<div id="app" class="app" data-tool="select">
+
+  <!-- ── 상단 바 ───────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 4h7v7H4z" fill="currentColor" opacity=".9"/></svg>
+      <span class="brand-name">사진 편집기</span>
+    </div>
+
+    <div class="top-mid">
+      <button id="btnUndo" class="icon-btn" title="실행 취소 (Ctrl+Z)" aria-label="실행 취소" disabled>
+        <svg viewBox="0 0 24 24"><path d="M9 7H5V3M5.6 7.3A8 8 0 1 1 4 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 2) scale(.9)"/></svg>
+      </button>
+      <button id="btnRedo" class="icon-btn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>
+        <svg viewBox="0 0 24 24"><path d="M15 7h4V3M18.4 7.3A8 8 0 1 0 20 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 2) scale(.9)"/></svg>
+      </button>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnOpen" class="btn ghost" title="사진 열기 (O)">
+        <svg viewBox="0 0 24 24" class="i"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span class="btn-label">사진</span>
+      </button>
+      <button id="btnSave" class="btn primary" title="저장 · 내보내기 (S)">
+        <svg viewBox="0 0 24 24" class="i"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="btn-label">저장</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── 본문 ──────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- 도구 레일 -->
+    <nav class="rail" id="rail" aria-label="도구">
+      <button class="tool is-on" data-tool="select" title="선택 · 이동">
+        <svg viewBox="0 0 24 24"><path d="M5 3l6.5 16 2.2-6.3L20 10.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>선택</span>
+      </button>
+      <button class="tool" data-tool="photo" title="사진">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="9.5" r="1.6" fill="currentColor"/><path d="M4.5 17l4.6-4.6 3.3 3.3 2.7-2.7 4.4 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>사진</span>
+      </button>
+      <button class="tool" data-tool="crop" title="자르기 · 회전">
+        <svg viewBox="0 0 24 24"><path d="M7 3v14h14M3 7h14v14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>자르기</span>
+      </button>
+      <button class="tool" data-tool="adjust" title="색감 · 필터">
+        <svg viewBox="0 0 24 24"><path d="M5 8h14M5 16h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="8" r="2.4" fill="#12141a" stroke="currentColor" stroke-width="1.7"/><circle cx="15" cy="16" r="2.4" fill="#12141a" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span>색감</span>
+      </button>
+      <button class="tool" data-tool="text" title="텍스트">
+        <svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>텍스트</span>
+      </button>
+      <button class="tool" data-tool="draw" title="그리기">
+        <svg viewBox="0 0 24 24"><path d="M4 20l4.5-1.2L19 8.3a2.1 2.1 0 0 0-3-3L5.2 15.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14.5 6.8l2.7 2.7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span>그리기</span>
+      </button>
+      <button class="tool" data-tool="shape" title="도형">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="9" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="15.5" cy="15.5" r="5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span>도형</span>
+      </button>
+      <button class="tool" data-tool="mosaic" title="모자이크">
+        <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h3v3H8zM18 8h3v3h-3z" fill="currentColor" opacity=".55"/></svg>
+        <span>모자이크</span>
+      </button>
+    </nav>
+
+    <!-- 캔버스 -->
+    <section class="stage" id="stage">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="view"></canvas>
+        <canvas id="overlay" tabindex="0"></canvas>
+
+        <div class="empty" id="empty">
+          <div class="empty-inner">
+            <svg viewBox="0 0 24 24" class="empty-icon"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8.5" cy="9.5" r="1.6" fill="currentColor"/><path d="M4.5 17l4.6-4.6 3.3 3.3 2.7-2.7 4.4 4.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            <p class="empty-title">사진을 불러오세요</p>
+            <p class="empty-sub">끌어다 놓기 · 붙여넣기(Ctrl+V) · 파일 선택</p>
+            <div class="empty-btns">
+              <button class="btn primary" id="btnEmptyOpen">사진 열기</button>
+              <button class="btn ghost" id="btnEmptySample">샘플로 시작</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="drop-hint" id="dropHint">여기에 사진을 놓으면 불러옵니다</div>
+        <div class="busy" id="busy"><span class="spinner"></span><span id="busyText">처리 중…</span></div>
+      </div>
+
+      <div class="statusbar">
+        <span id="sizeLabel" class="size-label">—</span>
+        <span class="status-sep"></span>
+        <div class="slot-strip" id="slotStrip"></div>
+        <span class="status-spacer"></span>
+        <span class="hint-mini" id="tipText">사진을 불러오면 편집을 시작합니다</span>
+      </div>
+    </section>
+
+    <!-- 옵션 패널 -->
+    <aside class="panel" id="panel">
+      <button class="panel-collapse" id="panelCollapse" title="패널 접기" aria-label="패널 접기">
+        <span class="chev">⌄</span>
+      </button>
+      <div class="panel-scroll" id="panelScroll">
+
+        <!-- 선택 -->
+        <section class="pane is-on" data-pane="select">
+          <h2>선택 · 이동</h2>
+          <p class="note">캔버스에서 텍스트·도형·모자이크를 눌러 고르면, 모서리 핸들로 크기를 바꾸고 안쪽을 끌어 옮길 수 있습니다. 텍스트는 위쪽 동그라미로 회전합니다.</p>
+          <div class="row">
+            <button class="btn ghost wide" id="btnSelText">+ 텍스트 추가</button>
+            <button class="btn ghost wide" id="btnSelOpen">사진 열기</button>
+          </div>
+          <div class="subhead">단축키</div>
+          <p class="note tiny">실행취소 Ctrl+Z · 다시실행 Ctrl+Shift+Z · 복제 Ctrl+D · 삭제 Del<br>사진 열기 O · 저장 S · 붙여넣기 Ctrl+V · 방향키로 미세 이동</p>
+        </section>
+
+        <!-- 사진 -->
+        <section class="pane" data-pane="photo">
+          <h2>사진</h2>
+          <div class="row">
+            <button class="btn wide" id="btnOpen2">
+              <svg viewBox="0 0 24 24" class="i"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+              사진 열기
+            </button>
+            <button class="btn ghost wide" id="btnSample">샘플 사진</button>
+          </div>
+          <p class="note">로컬 파일 · 드래그&amp;드롭 · 클립보드 붙여넣기(Ctrl+V) · 휴대폰 사진첩</p>
+
+          <div class="subhead">불러온 사진 <span id="slotCount" class="pill">0</span></div>
+          <div class="slot-list" id="slotList">
+            <p class="note">아직 없습니다.</p>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="keepEdit" checked>
+            <span>사진을 바꿔도 편집(텍스트·필터·모자이크) 유지</span>
+          </label>
+          <button class="btn danger wide" id="btnResetEdit">편집 전체 초기화</button>
+          <p class="note tiny">사진은 브라우저 안에서만 처리되고 어디에도 업로드되지 않습니다.</p>
+        </section>
+
+        <!-- 자르기 -->
+        <section class="pane" data-pane="crop">
+          <h2>자르기 · 회전</h2>
+          <div class="chips" id="aspectChips">
+            <button class="chip is-on" data-aspect="free">자유</button>
+            <button class="chip" data-aspect="1:1">1:1</button>
+            <button class="chip" data-aspect="4:5">4:5</button>
+            <button class="chip" data-aspect="9:16">9:16</button>
+            <button class="chip" data-aspect="16:9">16:9</button>
+            <button class="chip" data-aspect="3:4">3:4</button>
+          </div>
+          <div class="row tight">
+            <button class="btn ghost" id="btnRotL" title="왼쪽으로 90°">
+              <svg viewBox="0 0 24 24" class="i"><path d="M4 9V4h5M4.5 8.6A8 8 0 1 1 4 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              회전
+            </button>
+            <button class="btn ghost" id="btnFlipH" title="좌우 반전">
+              <svg viewBox="0 0 24 24" class="i"><path d="M12 3v18M9 7L4 12l5 5M15 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              좌우
+            </button>
+            <button class="btn ghost" id="btnFlipV" title="상하 반전">
+              <svg viewBox="0 0 24 24" class="i"><path d="M3 12h18M7 9l5-5 5 5M7 15l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              상하
+            </button>
+          </div>
+          <div class="row tight">
+            <button class="btn primary wide" id="btnCropApply">자르기 적용</button>
+            <button class="btn ghost" id="btnCropCancel">취소</button>
+          </div>
+          <p class="note" id="cropNote">모서리를 끌어 자르고, 안쪽을 끌면 영역이 이동합니다.</p>
+        </section>
+
+        <!-- 색감 -->
+        <section class="pane" data-pane="adjust">
+          <h2>색감 · 필터</h2>
+          <div class="filters" id="filterGrid"></div>
+          <div class="row tight" style="margin-bottom:12px">
+            <button class="btn ghost" id="btnCompare" title="보정 전후 비교 (누르고 있는 동안)">원본 비교</button>
+          </div>
+          <div class="sliders" id="adjSliders"></div>
+          <button class="btn ghost wide" id="btnAdjReset">보정 초기화</button>
+        </section>
+
+        <!-- 텍스트 -->
+        <section class="pane" data-pane="text">
+          <h2>텍스트</h2>
+          <button class="btn primary wide" id="btnAddText">+ 텍스트 추가</button>
+          <p class="note">캔버스를 눌러 원하는 위치에 바로 추가할 수도 있습니다.</p>
+
+          <div class="txt-edit" id="txtEdit">
+            <label class="field">
+              <span class="lbl">내용</span>
+              <textarea id="txText" rows="2" placeholder="문구를 입력하세요"></textarea>
+            </label>
+
+            <label class="field">
+              <span class="lbl">폰트</span>
+              <select id="txFont" class="select"></select>
+            </label>
+            <div class="font-preview" id="fontPreview">가나다 ABC 123</div>
+
+            <div class="field">
+              <span class="lbl">크기 <b id="txSizeVal">8%</b></span>
+              <input type="range" id="txSize" min="1" max="40" step=".5" value="8">
+            </div>
+            <div class="field">
+              <span class="lbl">줄바꿈 폭 <b id="txWrapVal">90%</b></span>
+              <input type="range" id="txWrap" min="20" max="100" step="1" value="90">
+            </div>
+
+            <div class="row tight">
+              <div class="seg" id="txAlign">
+                <button data-align="left" title="왼쪽">◧</button>
+                <button data-align="center" class="is-on" title="가운데">≡</button>
+                <button data-align="right" title="오른쪽">◨</button>
+              </div>
+              <label class="mini-field" title="자간">
+                <span>자간</span><input type="number" id="txTracking" min="-20" max="60" step="1" value="0">
+              </label>
+              <label class="mini-field" title="행간">
+                <span>행간</span><input type="number" id="txLeading" min="50" max="250" step="5" value="120">
+              </label>
+            </div>
+
+            <details class="group" open>
+              <summary>글자 스타일</summary>
+              <div class="row tight">
+                <label class="color-field"><span>색</span><input type="color" id="txColor" value="#ffffff"></label>
+                <div class="seg" id="txWeight">
+                  <button data-weight="400">보통</button>
+                  <button data-weight="700">굵게</button>
+                  <button data-weight="900">매우굵게</button>
+                </div>
+              </div>
+              <div class="row tight">
+                <label class="color-field"><span>불투명도</span><input type="range" id="txOpacity" min="10" max="100" value="100"></label>
+              </div>
+              <label class="switch small"><input type="checkbox" id="txItalic"><span>기울임</span></label>
+            </details>
+
+            <details class="group">
+              <summary>컬러 테두리</summary>
+              <div class="row tight">
+                <label class="color-field"><span>색</span><input type="color" id="txStrokeColor" value="#000000"></label>
+                <label class="mini-field"><span>두께</span><input type="range" id="txStrokeWidth" min="0" max="30" step="0.5" value="0"><b id="txStrokeVal">0</b></label>
+              </div>
+            </details>
+
+            <details class="group">
+              <summary>컬러 그림자</summary>
+              <div class="row tight">
+                <label class="color-field"><span>색</span><input type="color" id="txShadowColor" value="#000000"></label>
+                <label class="mini-field"><span>불투명도</span><input type="range" id="txShadowAlpha" min="0" max="100" value="70"></label>
+              </div>
+              <div class="field">
+                <span class="lbl">번짐 <b id="txShadowBlurVal">18</b></span>
+                <input type="range" id="txShadowBlur" min="0" max="60" step="1" value="18">
+              </div>
+              <div class="row tight">
+                <label class="mini-field"><span>X</span><input type="range" id="txShadowX" min="-40" max="40" step="1" value="0"></label>
+                <label class="mini-field"><span>Y</span><input type="range" id="txShadowY" min="-40" max="40" step="1" value="6"></label>
+              </div>
+            </details>
+
+            <details class="group">
+              <summary>배경 박스</summary>
+              <label class="switch small"><input type="checkbox" id="txBgOn"><span>배경 사용</span></label>
+              <div class="row tight">
+                <label class="color-field"><span>색</span><input type="color" id="txBgColor" value="#000000"></label>
+                <label class="mini-field"><span>둥글기</span><input type="range" id="txBgRadius" min="0" max="100" value="24"></label>
+              </div>
+              <div class="row tight">
+                <label class="mini-field"><span>여백</span><input type="range" id="txBgPad" min="0" max="120" value="40"></label>
+                <label class="mini-field"><span>불투명도</span><input type="range" id="txBgAlpha" min="0" max="100" value="60"></label>
+              </div>
+            </details>
+
+            <div class="row tight layer-actions">
+              <button class="btn ghost" id="btnDupText" title="복제 (Ctrl+D)">복제</button>
+              <button class="btn ghost" id="btnFrontText" title="맨 앞으로">앞으로</button>
+              <button class="btn ghost" id="btnBackText" title="맨 뒤로">뒤로</button>
+              <button class="btn danger" id="btnDelText">삭제</button>
+            </div>
+          </div>
+          <p class="note" id="textEmptyNote">텍스트를 추가하면 여기에서 모든 스타일을 조절할 수 있습니다.</p>
+        </section>
+
+        <!-- 그리기 -->
+        <section class="pane" data-pane="draw">
+          <h2>그리기</h2>
+          <div class="chips" id="drawModes">
+            <button class="chip is-on" data-mode="pen">펜</button>
+            <button class="chip" data-mode="marker">형광펜</button>
+            <button class="chip" data-mode="eraser">지우개</button>
+          </div>
+          <label class="color-field full"><span>색</span><input type="color" id="drawColor" value="#ff4d6d"></label>
+          <div class="field">
+            <span class="lbl">두께 <b id="drawWidthVal">6</b></span>
+            <input type="range" id="drawWidth" min="1" max="60" step="1" value="6">
+          </div>
+          <div class="field">
+            <span class="lbl">불투명도 <b id="drawOpacityVal">100%</b></span>
+            <input type="range" id="drawOpacity" min="10" max="100" step="5" value="100">
+          </div>
+          <p class="note">지우개는 그은 선을 통째로 지웁니다. 모자이크는 ‘모자이크’ 도구를 쓰세요.</p>
+        </section>
+
+        <!-- 도형 -->
+        <section class="pane" data-pane="shape">
+          <h2>도형</h2>
+          <div class="chips" id="shapeKinds">
+            <button class="chip is-on" data-shape="rect">사각형</button>
+            <button class="chip" data-shape="ellipse">원</button>
+            <button class="chip" data-shape="arrow">화살표</button>
+          </div>
+          <label class="color-field full"><span>선 색</span><input type="color" id="shapeColor" value="#ffd166"></label>
+          <div class="field">
+            <span class="lbl">선 두께 <b id="shapeWidthVal">6</b></span>
+            <input type="range" id="shapeWidth" min="1" max="40" step="1" value="6">
+          </div>
+          <label class="switch small"><input type="checkbox" id="shapeFill"><span>채우기</span></label>
+          <label class="color-field full"><span>채움 색</span><input type="color" id="shapeFillColor" value="#ffd166"></label>
+          <div class="field">
+            <span class="lbl">불투명도 <b id="shapeOpacityVal">100%</b></span>
+            <input type="range" id="shapeOpacity" min="10" max="100" step="5" value="100">
+          </div>
+        </section>
+
+        <!-- 모자이크 -->
+        <section class="pane" data-pane="mosaic">
+          <h2>모자이크</h2>
+          <div class="chips" id="mosaicModes">
+            <button class="chip is-on" data-mode="pixel">픽셀 모자이크</button>
+            <button class="chip" data-mode="blur">블러</button>
+          </div>
+          <div class="field">
+            <span class="lbl">강도 <b id="mosaicSizeVal">18</b></span>
+            <input type="range" id="mosaicSize" min="4" max="80" step="2" value="18">
+          </div>
+          <p class="note">가릴 곳을 드래그하세요. 여러 번 칠할 수 있고, 만든 영역은 ‘레이어’에서 지웁니다.</p>
+          <button class="btn ghost wide" id="btnClearMosaic">모자이크 모두 지우기</button>
+        </section>
+
+      </div>
+
+      <!-- 레이어 -->
+      <div class="panel-layers" id="panelLayers">
+        <div class="subhead">레이어 <span class="pill" id="layerCount">0</span></div>
+        <div class="layer-list" id="layerList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" multiple hidden>
+</div>
+
+<!-- 저장 모달 -->
+<div class="modal" id="saveModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>저장 · 내보내기</h2>
+      <button class="icon-btn" id="btnCloseSave" aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chips" id="formatChips">
+        <button class="chip is-on" data-fmt="png">PNG</button>
+        <button class="chip" data-fmt="jpeg">JPG</button>
+        <button class="chip" data-fmt="webp">WebP</button>
+      </div>
+      <div class="field" id="qualityField" hidden>
+        <span class="lbl">품질 <b id="qualityVal">92%</b></span>
+        <input type="range" id="quality" min="50" max="100" step="1" value="92">
+      </div>
+      <label class="field">
+        <span class="lbl">해상도</span>
+        <select id="exportSize" class="select">
+          <option value="0">원본 해상도</option>
+          <option value="2560">긴 변 2560px</option>
+          <option value="1920">긴 변 1920px</option>
+          <option value="1080">긴 변 1080px</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="lbl">파일 이름</span>
+        <input type="text" id="exportName" class="text-input" placeholder="photo-editor">
+      </label>
+      <div class="export-info" id="exportInfo">—</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost wide" id="btnShare">공유</button>
+      <button class="btn primary wide" id="btnDownload">다운로드</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/boot.js"></script>
+</body>
+</html>
