@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>photo-editor 드래그 검수</title>
+<style>
+  body{margin:0;background:#181a20;color:#dfe3ee;font:12px/1.5 -apple-system,'Noto Sans KR',sans-serif;display:flex;gap:10px}
+  #wrap{padding:8px}
+  #f{width:1180px;height:880px;border:0;background:#000;border-radius:8px;display:block}
+  #log{width:300px;padding:10px;font-size:11.5px;white-space:pre-wrap;color:#b9c0d0;overflow:auto;max-height:96vh}
+  button{font:inherit;background:#2a2f3a;color:#e8eaf0;border:1px solid #3c4456;border-radius:8px;padding:6px 10px;cursor:pointer;margin:0 4px 6px 0}
+  b{color:#c9b6ff}
+</style></head>
+<body>
+  <div id="wrap">
+    <iframe id="f" src="./index.html"></iframe>
+    <div style="margin-top:6px">
+      <button id="b1">1단계 실행 (필터·텍스트·모자이크·그리기·도형)</button>
+      <button id="b2">2단계 (자르기)</button>
+      <button id="b3">3단계 (Undo/Redo·내보내기)</button>
+    </div>
+  </div>
+  <div id="log">준비…</div>
+<script>
+const f = document.getElementById('f');
+const logEl = document.getElementById('log');
+const lines = [];
+function log(s, cls) { lines.push((cls ? '· ' : '· ') + s); logEl.innerHTML = lines.join('\n'); }
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+function ready(){ return new Promise(r => { const t = setInterval(() => { if (f.contentWindow.__PE_READY__) { clearInterval(t); r(); } }, 60); }); }
+
+function ptr(el, type, x, y, buttons) {
+  const r = el.getBoundingClientRect();
+  el.dispatchEvent(new PointerEvent(type, {
+    clientX: r.left + x * r.width, clientY: r.top + y * r.height,
+    bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse',
+    isPrimary: true, buttons: buttons === undefined ? (type === 'pointerup' ? 0 : 1) : buttons, button: 0,
+  }));
+}
+async function drag(x1, y1, x2, y2, steps = 14) {
+  const w = f.contentWindow, d = w.document;
+  const ov = d.getElementById('overlay');
+  ptr(ov, 'pointerdown', x1, y1);
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    ptr(ov, 'pointermove', x1 + (x2 - x1) * t, y1 + (y2 - y1) * t);
+    await wait(6);
+  }
+  ptr(ov, 'pointerup', x2, y2, 0);
+  await wait(40);
+}
+function setInput(d, id, value) {
+  const el = d.getElementById(id);
+  el.value = value;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+document.getElementById('b1').onclick = async () => {
+  logEl.textContent = '';
+  await ready();
+  const w = f.contentWindow, d = w.document, PE = w.__PE__;
+
+  await PE.E.loadSample();
+  await wait(300);
+  log('사진 불러옴: ' + JSON.stringify(PE.R.outputSize()));
+  log('캔버스: ' + d.getElementById('view').width + '×' + d.getElementById('view').height);
+
+  d.querySelector('#rail .tool[data-tool="adjust"]').click();
+  await wait(120);
+  d.querySelector('#filterGrid .filter-btn[data-preset="vivid"]').click();
+  await wait(150);
+  log('필터 적용 → ' + JSON.stringify(PE.S.adj));
+
+  d.querySelector('#rail .tool[data-tool="text"]').click();
+  await wait(100);
+  d.getElementById('btnAddText').click();
+  await wait(150);
+  d.getElementById('txText').value = '오늘도 화이팅!';
+  d.getElementById('txText').dispatchEvent(new Event('input', { bubbles: true }));
+  setInput(d, 'txStrokeColor', '#ff2d55');
+  setInput(d, 'txStrokeWidth', '7');
+  setInput(d, 'txShadowColor', '#1a0b2e');
+  setInput(d, 'txShadowBlur', '22');
+  setInput(d, 'txShadowY', '9');
+  setInput(d, 'txSize', '13');
+  await wait(200);
+  log('텍스트 레이어: ' + JSON.stringify(PE.S.layers[0] && {
+    text: PE.S.layers[0].text, font: PE.S.layers[0].font, size: PE.S.layers[0].size,
+    stroke: PE.S.layers[0].stroke, shadow: PE.S.layers[0].shadow }));
+
+  d.querySelector('#rail .tool[data-tool="mosaic"]').click();
+  await wait(100);
+  setInput(d, 'mosaicSize', '26');
+  PE.S.sel = null;
+  await drag(0.72, 0.28, 0.92, 0.52);
+  log('모자이크 레이어 수: ' + PE.S.layers.filter(l => l.type === 'mosaic').length);
+
+  d.querySelector('#rail .tool[data-tool="draw"]').click();
+  await wait(100);
+  d.querySelector('#drawModes .chip[data-mode="marker"]').click();
+  setInput(d, 'drawColor', '#ffe066');
+  PE.S.sel = null;
+  ptr(d.getElementById('overlay'), 'pointerdown', 0.12, 0.62);
+  for (let i = 1; i <= 18; i++) {
+    ptr(d.getElementById('overlay'), 'pointermove', 0.12 + i * 0.022, 0.62 + Math.sin(i / 2.5) * 0.035);
+    await wait(6);
+  }
+  ptr(d.getElementById('overlay'), 'pointerup', 0.5, 0.62, 0);
+  await wait(60);
+  log('형광펜 레이어 수: ' + PE.S.layers.filter(l => l.type === 'stroke').length);
+
+  d.querySelector('#rail .tool[data-tool="shape"]').click();
+  await wait(100);
+  d.querySelector('#shapeKinds .chip[data-shape="arrow"]').click();
+  setInput(d, 'shapeColor', '#3ddc97');
+  PE.S.sel = null;
+  await drag(0.18, 0.24, 0.42, 0.42);
+  log('도형 레이어 수: ' + PE.S.layers.filter(l => l.type === 'shape').length);
+  log('전체 레이어: ' + PE.S.layers.length);
+  log('실행취소 가능: ' + w.__PE__.State.historyState().canUndo);
+  log('— 1단계 완료');
+};
+
+document.getElementById('b2').onclick = async () => {
+  const w = f.contentWindow, d = w.document, PE = w.__PE__;
+  const before = PE.R.outputSize();
+  d.querySelector('#rail .tool[data-tool="crop"]').click();
+  await wait(250);
+  log('자르기 모드 진입 · 캔버스 ' + PE.R.outputSize().w + '×' + PE.R.outputSize().h);
+  d.querySelector('#aspectChips .chip[data-aspect="1:1"]').click();
+  await wait(200);
+  log('1:1 비율 → ' + JSON.stringify(PE.S.cropDraft));
+  await drag(1, 1, 0.72, 0.72);
+  log('핸들 드래그 → ' + JSON.stringify(PE.S.cropDraft));
+  d.getElementById('btnCropApply').click();
+  await wait(300);
+  const after = PE.R.outputSize();
+  log('자르기 적용 → ' + before.w + '×' + before.h + ' → ' + after.w + '×' + after.h);
+  log('도구: ' + PE.S.tool);
+};
+
+document.getElementById('b3').onclick = async () => {
+  const w = f.contentWindow, d = w.document, PE = w.__PE__;
+  const n0 = PE.S.layers.length;
+  PE.State.undo(); PE.E.afterHistory(); await wait(150);
+  const n1 = PE.S.layers.length;
+  PE.State.redo(); PE.E.afterHistory(); await wait(150);
+  const n2 = PE.S.layers.length;
+  log('Undo: ' + n0 + '→' + n1 + ', Redo: ' + n1 + '→' + n2);
+
+  const out = await PE.E.buildExport();
+  log('내보내기: ' + out.W + '×' + out.H + ' · ' + out.mime + ' · ' + Math.round(out.blob.size / 1024) + 'KB');
+  const png = await new Promise(res => { const c = d.createElement('canvas'); const i = new Image(); i.onload = () => res(i.naturalWidth + '×' + i.naturalHeight); i.src = URL.createObjectURL(out.blob); });
+  log('디코딩 확인: ' + png);
+  log('전체 레이어: ' + PE.S.layers.map(l => l.type).join(','));
+};
+</script>
+</body></html>
