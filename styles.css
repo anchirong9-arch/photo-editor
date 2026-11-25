@@ -260,7 +260,7 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 .mini-field input[type="range"]{flex:1 1 auto;height:20px;min-width:0;}
 .mini-field span{white-space:nowrap;flex:0 0 auto;}
 .mini-field input[type="number"]{
-  width:38px;background:#12151b;border:1px solid var(--line-2);border-radius:6px;padding:3px 4px;
+  width:42px;font-size:11px;background:#12151b;border:1px solid var(--line-2);border-radius:6px;padding:3px 4px;
   text-align:center;font-variant-numeric:tabular-nums;
 }
 .mini-field b{font-weight:600;color:#cfd4e2;min-width:14px;text-align:right;font-variant-numeric:tabular-nums;}
