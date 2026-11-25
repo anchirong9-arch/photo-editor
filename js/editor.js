@@ -271,8 +271,7 @@ function cropHitTest(px, py, W, H) {
 }
 
 function cropPointerDown(e) {
-  const { x: px, y: py, nx, ny } = toPx(e);
-  const W = overlay.width, H = overlay.height;
+  const { x: px, y: py, nx, ny } = toPx(e);  const W = overlay.width, H = overlay.height;
   const mode = cropHitTest(px, py, W, H);
   cropG = {
     mode, startN: { x: nx, y: ny },
@@ -346,9 +345,9 @@ export function setAspect(v) {
 /* ── 포인터 ───────────────────────────────────────────── */
 overlay.addEventListener('pointerdown', e => {
   if (!R.hasImage()) return;
-  overlay.setPointerCapture(e.pointerId);
+  try { overlay.setPointerCapture(e.pointerId); } catch (err) { /* 합성 이벤트·일부 브라우저 */ }
   dragging = true;
-  if (S.tool === 'crop') { cropPointerDown(e); return; }
+  if (S.tool === 'crop') { cropG = null; cropPointerDown(e); return; }
   pointerDown(e);
 });
 overlay.addEventListener('pointermove', e => {
