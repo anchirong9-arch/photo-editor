@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>모바일 모달 검수</title>
+<style>
+  body{margin:0;background:#2a2d35;padding:10px;display:flex;gap:14px;color:#c9cfdd;font:12px -apple-system,'Noto Sans KR',sans-serif}
+  .frame{background:#000;border-radius:12px;overflow:hidden}
+  iframe{width:390px;height:844px;border:0;display:block}
+  #m{color:#ffd166;font-size:11px;max-width:300px}
+</style></head><body>
+<div><div class="frame"><iframe id="f" src="./index.html?m=1"></iframe></div><div id="m">측정 중…</div></div>
+<script>
+const f=document.getElementById('f');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+  await new Promise(r=>{const t=setInterval(()=>{if(f.contentWindow.__PE_READY__){clearInterval(t);r();}},60);});
+  const w=f.contentWindow,d=w.document;
+  d.getElementById('btnLink').click(); await wait(600);
+  const card=d.querySelector('#linkModal .modal-card').getBoundingClientRect();
+  const over=d.documentElement.scrollWidth-w.innerWidth;
+  const st=d.getElementById('linkStatus').getBoundingClientRect();
+  document.getElementById('m').textContent=`뷰포트 ${w.innerWidth} · 모달 ${Math.round(card.width)}×${Math.round(card.height)} @${Math.round(card.left)},${Math.round(card.top)} · 상태줄 높이 ${Math.round(st.height)} · 가로넘침 ${over>0?over+'px':'없음'}`;
+})();
+</script></body></html>
