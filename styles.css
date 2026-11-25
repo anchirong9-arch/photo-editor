@@ -259,7 +259,9 @@ input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;b
 }
 .mini-field input[type="range"]{flex:1 1 auto;height:20px;min-width:0;}
 .mini-field span{white-space:nowrap;flex:0 0 auto;}
-.mini-field input[type="number"]{
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.mini-field input[type="number"]{-moz-appearance:textfield;
   width:42px;font-size:11px;background:#12151b;border:1px solid var(--line-2);border-radius:6px;padding:3px 4px;
   text-align:center;font-variant-numeric:tabular-nums;
 }
