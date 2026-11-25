@@ -4,6 +4,8 @@
 
 import * as E from './editor.js';
 import { initUI } from './ui.js';
+import * as State from './state.js';
+import * as Render from './render.js';
 
 function boot() {
   initUI();
@@ -25,6 +27,7 @@ function boot() {
   }
 
   // 서비스워커 없이도 오프라인 캐시는 브라우저에 맡긴다
+  window.__PE__ = { S: State.S, E, R: Render, State };
   window.__PE_READY__ = true;
 }
 
